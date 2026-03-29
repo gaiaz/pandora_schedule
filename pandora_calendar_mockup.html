@@ -259,6 +259,14 @@
       border: 1px solid #353840;
     }
 
+    .calendar-grid {
+      max-height: calc(100vh - 320px);
+      min-height: 420px;
+      overflow: auto;
+      position: relative;
+      scrollbar-gutter: stable;
+    }
+
     .calendar-head,
     .calendar-row {
       display: grid;
@@ -392,7 +400,7 @@
       width: 100%;
       height: calc(var(--slot-h) - 24px);
       min-height: 0;
-      border-radius: var(--radius-md);
+      border-radius: 8px;
       border: 1px solid transparent;
       padding: 8px 10px;
       background: transparent;
@@ -515,6 +523,10 @@
       .button {
         width: 100%;
       }
+
+      .calendar-grid {
+        max-height: calc(100vh - 260px);
+      }
     }
   </style>
 </head>
@@ -588,10 +600,12 @@
         </div>
       </div>
 
-      <div class="calendar-head" id="calendarHead">
-        <div class="corner">Orario</div>
+      <div class="calendar-grid">
+        <div class="calendar-head" id="calendarHead">
+          <div class="corner">Orario</div>
+        </div>
+        <div class="calendar-body" id="calendarBody"></div>
       </div>
-      <div class="calendar-body" id="calendarBody"></div>
 
       <div class="footer-note">
         <span>Mockup statico: nessun backend reale, ma stati simulati come se fossero alimentati dal pannello di disponibilita.</span>
