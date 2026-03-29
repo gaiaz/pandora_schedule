@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandora Scheduling • Dark Signature</title>
+  <style>
+    :root {
+      --bg: #09090a;
+      --bg-layer: #111113;
+      --panel: rgba(18, 18, 20, 0.88);
+      --panel-strong: #161619;
+      --panel-soft: rgba(255, 255, 255, 0.03);
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --text: #f6f1f2;
+      --text-secondary: #b9b0b4;
+      --text-muted: #857c80;
+      --accent: #e3a7b6;
+      --accent-strong: #f1bcc9;
+      --accent-soft: rgba(227, 167, 182, 0.12);
+      --accent-glow: rgba(227, 167, 182, 0.22);
+      --booked-fill: linear-gradient(135deg, #e5adbb 0%, #c98296 100%);
+      --blocked-bg: #1f2024;
+      --blocked-border: #2d2f35;
+      --neutral-bg: rgba(255, 255, 255, 0.02);
+      --time-col: 112px;
+      --slot-h: 98px;
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+      --shadow: 0 34px 80px rgba(0, 0, 0, 0.45);
+      --transition-fast: 180ms ease;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(227, 167, 182, 0.18), transparent 22%),
+        radial-gradient(circle at right 20%, rgba(227, 167, 182, 0.08), transparent 26%),
+        linear-gradient(180deg, #0a0a0c 0%, #111114 100%);
+    }
+
+    .shell {
+      width: min(1520px, calc(100vw - 52px));
+      margin: 26px auto 34px;
+    }
+
+    .topbar,
+    .toolbar,
+    .calendar-card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px 28px;
+      border-radius: var(--radius-md);
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      height: 40px;
+      width: auto;
+      display: block;
+      filter: brightness(0) invert(1);
+    }
+
+    .brand-copy {
+      height: 40px;
+      display: flex;
+      align-items: end;
+    }
+
+    .brand-copy strong {
+      font-size: 22px;
+      letter-spacing: -0.04em;
+      font-weight: 500;
+      line-height: 1;
+      opacity: 0.78;
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .theme-switch a,
+    .theme-switch span {
+      min-width: 86px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .theme-switch a {
+      color: var(--text-secondary);
+    }
+
+    .theme-switch .is-active {
+      background: rgba(227, 167, 182, 0.16);
+      color: var(--accent-strong);
+    }
+
+    .meta-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      gap: 14px;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .field select,
+    .button {
+      height: 48px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 0 14px;
+      font-size: 14px;
+    }
+
+    .button {
+      align-self: end;
+      min-width: 130px;
+      font-weight: 700;
+      background: linear-gradient(180deg, rgba(227, 167, 182, 0.22) 0%, rgba(227, 167, 182, 0.12) 100%);
+      border-color: rgba(227, 167, 182, 0.35);
+      cursor: pointer;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(227, 167, 182, 0.14);
+      border-color: rgba(227, 167, 182, 0.55);
+    }
+
+    .calendar-card {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .calendar-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    }
+
+    .calendar-bar strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .calendar-bar span {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+
+    .legend-swatch.available {
+      border: 2px solid var(--accent);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .legend-swatch.booked {
+      background: #d698a8;
+    }
+
+    .legend-swatch.blocked {
+      background: #25272c;
+      border: 1px solid #353840;
+    }
+
+    .calendar-head,
+    .calendar-row {
+      display: grid;
+      grid-template-columns: var(--time-col) repeat(5, minmax(220px, 1fr));
+    }
+
+    .calendar-head {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: rgba(16, 16, 18, 0.96);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .corner {
+      min-height: 98px;
+      padding: 18px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      border-right: 1px solid var(--line);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .day-head {
+      min-height: 98px;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.01) 100%);
+      transition: background var(--transition-fast);
+    }
+
+    .day-head:last-child { border-right: 0; }
+
+    .day-head .weekday {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .day-head .date {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      margin-top: 6px;
+    }
+
+    .day-head .month {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .day-head .count {
+      width: fit-content;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(227, 167, 182, 0.12);
+      color: var(--accent-strong);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .day-head.today::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 0;
+      height: 3px;
+      border-radius: 999px 999px 0 0;
+      background: var(--accent);
+      box-shadow: 0 0 18px var(--accent-glow);
+    }
+
+    .calendar-body {
+      padding: 10px 0 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, rgba(255, 255, 255, 0.01) 100%);
+    }
+
+    .calendar-row {
+      height: var(--slot-h);
+      align-items: stretch;
+    }
+
+    .time-cell,
+    .slot-cell {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .time-cell {
+      height: 100%;
+      padding: 0 14px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .slot-cell {
+      height: 100%;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      transition: background var(--transition-fast);
+    }
+
+    .slot-cell:last-child { border-right: 0; }
+
+    .day-head.is-col-hover,
+    .slot-cell.is-col-hover {
+      background: rgba(227, 167, 182, 0.08);
+    }
+
+    .slot-card {
+      width: 100%;
+      height: calc(var(--slot-h) - 24px);
+      min-height: 0;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      padding: 8px 10px;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      color: inherit;
+      overflow: hidden;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .slot-card.neutral {
+      background: var(--neutral-bg);
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .slot-card.available {
+      background: rgba(227, 167, 182, 0.04);
+      border: 2px solid rgba(227, 167, 182, 0.85);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+    }
+
+    .slot-card.available:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(227, 167, 182, 0.1);
+    }
+
+    .slot-card.booked {
+      background: var(--booked-fill);
+      color: #27181d;
+      box-shadow: 0 10px 20px rgba(227, 167, 182, 0.1);
+    }
+
+    .slot-card.blocked {
+      background: var(--blocked-bg);
+      border-color: var(--blocked-border);
+      color: var(--text-muted);
+    }
+
+    .slot-card:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 4px rgba(227, 167, 182, 0.16);
+    }
+
+    .slot-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.75;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-subtitle {
+      font-size: 14px;
+      opacity: 0.84;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-meta {
+      font-size: 11px;
+      opacity: 0.72;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-card.neutral .slot-eyebrow,
+    .slot-card.neutral .slot-title,
+    .slot-card.neutral .slot-subtitle,
+    .slot-card.neutral .slot-meta {
+      display: none;
+    }
+
+    .footer-note {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 18px 24px 24px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    @media (max-width: 1320px) {
+      .toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        width: calc(100vw - 26px);
+        margin-inline: auto;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="./pandora-logo.svg" alt="Pandora" />
+        <div class="brand-copy">
+          <strong>Scheduling Dark Signature</strong>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <div class="theme-switch" aria-label="Switch tema mockup">
+          <a href="./pandora_calendar_enterprise_light_hover.html">Premium</a>
+          <span class="is-active">Dark</span>
+        </div>
+        <span class="meta-chip">Boutique Duomo</span>
+        <span class="meta-chip">Settimana 2 - 6 Marzo</span>
+        <span class="meta-chip">Preview frontend</span>
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="Filtri calendario">
+      <div class="field">
+        <label for="store">Boutique</label>
+        <select id="store">
+          <option>Boutique Duomo</option>
+          <option>Boutique Brera</option>
+          <option>Boutique Roma Centro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="person">Stylist</label>
+        <select id="person">
+          <option>Tutti gli stylist</option>
+          <option>Martina R.</option>
+          <option>Giulia M.</option>
+          <option>Elena F.</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="week">Settimana</label>
+        <select id="week">
+          <option>2 - 6 Marzo 2026</option>
+          <option>9 - 13 Marzo 2026</option>
+          <option>16 - 20 Marzo 2026</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="view">Vista</label>
+        <select id="view">
+          <option>Settimanale</option>
+          <option>4 giorni</option>
+          <option>Giornaliera</option>
+        </select>
+      </div>
+      <button class="button" type="button">Oggi</button>
+    </section>
+
+    <section class="calendar-card" aria-label="Calendario disponibilita settimanale">
+      <div class="calendar-bar">
+        <div>
+          <strong>Calendario disponibilita</strong>
+          <span>Gli slot disponibili mostrano lo stylist; quelli gia presi mostrano anche il cliente.</span>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch available"></span> Disponibile con stylist</span>
+          <span class="legend-item"><span class="legend-swatch booked"></span> Appuntamento cliente</span>
+          <span class="legend-item"><span class="legend-swatch blocked"></span> Non selezionabile</span>
+        </div>
+      </div>
+
+      <div class="calendar-head" id="calendarHead">
+        <div class="corner">Orario</div>
+      </div>
+      <div class="calendar-body" id="calendarBody"></div>
+
+      <div class="footer-note">
+        <span>Mockup statico: nessun backend reale, ma stati simulati come se fossero alimentati dal pannello di disponibilita.</span>
+        <span>La resa grafica separa chiaramente disponibilita, prenotazioni gia create e slot non attivi.</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const days = [
+      { weekday: "Lun", date: "02", month: "Marzo", today: false },
+      { weekday: "Mar", date: "03", month: "Marzo", today: false },
+      { weekday: "Mer", date: "04", month: "Marzo", today: true },
+      { weekday: "Gio", date: "05", month: "Marzo", today: false },
+      { weekday: "Ven", date: "06", month: "Marzo", today: false }
+    ];
+
+    const times = [
+      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+    ];
+
+    const slotData = {
+      "0-0": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "0-1": { state: "booked", stylist: "Martina R.", client: "Sara Conti", note: "Consulenza charm" },
+      "0-3": { state: "blocked", reason: "Brief team" },
+      "0-5": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
+      "0-10": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
+      "0-14": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
+
+      "1-2": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
+      "1-4": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
+      "1-8": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "1-11": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Bracelet bar" },
+      "1-15": { state: "blocked", reason: "Visual merchandising" },
+
+      "2-1": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-6": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Incisione" },
+      "2-7": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-9": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
+      "2-12": { state: "blocked", reason: "Riassortimento" },
+
+      "3-4": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
+      "3-7": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Anniversario" },
+      "3-11": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
+      "3-14": { state: "blocked", reason: "Team meeting" },
+      "3-15": { state: "booked", stylist: "Andrea L.", client: "Valentina P.", note: "Try-on" },
+
+      "4-0": { state: "booked", stylist: "Elena F.", client: "Paola Gatti", note: "Consulenza regalo" },
+      "4-5": { state: "blocked", reason: "Non esposto" },
+      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
+      "4-12": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Wedding appointment" },
+      "4-16": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
+    };
+
+    const calendarHead = document.getElementById("calendarHead");
+    const calendarBody = document.getElementById("calendarBody");
+
+    const summary = days.map((_, dayIndex) => {
+      let available = 0;
+      let booked = 0;
+
+      times.forEach((_, rowIndex) => {
+        const entry = slotData[`${dayIndex}-${rowIndex}`];
+        if (!entry) return;
+        if (entry.state === "available") available += 1;
+        if (entry.state === "booked") booked += 1;
+      });
+
+      return `${available} open • ${booked} booked`;
+    });
+
+    days.forEach((day, index) => {
+      const head = document.createElement("div");
+      head.className = `day-head${day.today ? " today" : ""}`;
+      head.dataset.col = index;
+      head.innerHTML = `
+        <span class="weekday">${day.weekday}</span>
+        <span class="date">${day.date}</span>
+        <span class="month">${day.month}</span>
+        <span class="count">${summary[index]}</span>
+      `;
+      calendarHead.appendChild(head);
+    });
+
+    const buildCard = (item, time, weekday) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = `slot-card ${item.state}`;
+
+      if (item.state === "neutral") {
+        card.disabled = true;
+        card.setAttribute("aria-hidden", "true");
+        return card;
+      }
+
+      if (item.state === "blocked") {
+        card.disabled = true;
+      }
+
+      let eyebrow = "";
+      let title = "";
+      let subtitle = "";
+      let meta = "";
+
+      if (item.state === "available") {
+        eyebrow = "Disponibile";
+        title = item.stylist;
+        subtitle = item.note || "Stylist disponibile";
+        meta = `${weekday} • ${time}`;
+      } else if (item.state === "booked") {
+        eyebrow = "Appuntamento";
+        title = item.stylist;
+        subtitle = item.client;
+        meta = item.note || `${weekday} • ${time}`;
+      } else if (item.state === "blocked") {
+        eyebrow = "Non selezionabile";
+        title = item.reason || "Slot bloccato";
+        subtitle = "Non prenotabile";
+        meta = `${weekday} • ${time}`;
+      }
+
+      card.setAttribute("aria-label", `${weekday} ${time} - ${title}${subtitle ? ` - ${subtitle}` : ""}`);
+      card.innerHTML = `
+        <span class="slot-eyebrow">${eyebrow}</span>
+        <span class="slot-title">${title}</span>
+        <span class="slot-subtitle">${subtitle}</span>
+        <span class="slot-meta">${meta}</span>
+      `;
+      return card;
+    };
+
+    times.forEach((time, rowIndex) => {
+      const row = document.createElement("div");
+      row.className = "calendar-row";
+
+      const timeCell = document.createElement("div");
+      timeCell.className = "time-cell";
+      timeCell.textContent = time;
+      row.appendChild(timeCell);
+
+      days.forEach((day, dayIndex) => {
+        const cell = document.createElement("div");
+        cell.className = "slot-cell";
+        cell.dataset.col = dayIndex;
+        const entry = slotData[`${dayIndex}-${rowIndex}`] || { state: "neutral" };
+        cell.appendChild(buildCard(entry, time, day.weekday));
+        row.appendChild(cell);
+      });
+
+      calendarBody.appendChild(row);
+    });
+
+    const clearHoverStates = () => {
+      document.querySelectorAll(".is-col-hover").forEach((element) => {
+        element.classList.remove("is-col-hover");
+      });
+    };
+
+    const applyHoverState = (col) => {
+      document.querySelectorAll(`[data-col="${col}"]`).forEach((element) => {
+        element.classList.add("is-col-hover");
+      });
+    };
+
+    const handleHoverTarget = (event) => {
+      const target = event.target.closest("[data-col]");
+      if (!target) return;
+      clearHoverStates();
+      applyHoverState(target.dataset.col);
+    };
+
+    calendarBody.addEventListener("pointerover", handleHoverTarget);
+    calendarHead.addEventListener("pointerover", handleHoverTarget);
+
+    calendarBody.addEventListener("focusin", handleHoverTarget);
+    calendarHead.addEventListener("focusin", handleHoverTarget);
+
+    calendarBody.addEventListener("pointerleave", clearHoverStates);
+    calendarHead.addEventListener("pointerleave", clearHoverStates);
+
+    calendarBody.addEventListener("focusout", () => {
+      requestAnimationFrame(() => {
+        if (!document.activeElement || !document.activeElement.closest("[data-col]")) {
+          clearHoverStates();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

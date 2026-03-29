@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandora Scheduling • Premium Light</title>
+  <style>
+    :root {
+      --bg: #f6f3f1;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-strong: #ffffff;
+      --surface-soft: #fcfaf9;
+      --border: #e8e1df;
+      --border-strong: #d8c8ce;
+      --text: #181314;
+      --text-secondary: #6f6667;
+      --text-muted: #9b9293;
+      --accent: #dca1b0;
+      --accent-strong: #bc7286;
+      --accent-soft: rgba(220, 161, 176, 0.12);
+      --accent-filled: linear-gradient(135deg, #e6b1bf 0%, #d594a5 100%);
+      --blocked-bg: #f1ecea;
+      --blocked-border: #e2d8d5;
+      --grid-line: rgba(24, 19, 20, 0.06);
+      --shadow: 0 24px 60px rgba(38, 24, 29, 0.08);
+      --shadow-soft: 0 12px 30px rgba(38, 24, 29, 0.06);
+      --time-col: 108px;
+      --slot-h: 98px;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --transition-fast: 160ms ease;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(220, 161, 176, 0.16), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(193, 155, 165, 0.12), transparent 22%),
+        linear-gradient(180deg, #f8f4f2 0%, #f3efed 100%);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 22px 28px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      height: 40px;
+      width: auto;
+      display: block;
+    }
+
+    .brand-copy {
+      height: 40px;
+      display: flex;
+      align-items: end;
+    }
+
+    .brand-copy strong {
+      font-size: 20px;
+      letter-spacing: -0.03em;
+      font-weight: 500;
+      line-height: 1;
+      opacity: 0.78;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .theme-switch a,
+    .theme-switch span {
+      min-width: 86px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .theme-switch a {
+      color: var(--text-secondary);
+    }
+
+    .theme-switch .is-active {
+      background: rgba(220, 161, 176, 0.16);
+      color: var(--accent-strong);
+    }
+
+    .tag,
+    .action-chip {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+
+    .filters,
+    .calendar-card {
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      gap: 14px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .field select,
+    .today-btn {
+      height: 48px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.92);
+      padding: 0 14px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .today-btn {
+      align-self: end;
+      min-width: 120px;
+      font-weight: 700;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f1f3 100%);
+      cursor: pointer;
+      transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .today-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+      box-shadow: 0 10px 20px rgba(188, 114, 134, 0.12);
+    }
+
+    .calendar-card {
+      overflow: hidden;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--grid-line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(252, 249, 248, 0.94) 100%);
+    }
+
+    .calendar-title strong {
+      display: block;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .calendar-title span {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .calendar-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+
+    .legend-dot.available {
+      border: 2px solid var(--accent-strong);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .legend-dot.booked {
+      background: #d89ba9;
+    }
+
+    .legend-dot.blocked {
+      background: #ece4e2;
+      border: 1px solid #ddd0cc;
+    }
+
+    .calendar-grid {
+      overflow-x: auto;
+    }
+
+    .calendar-head,
+    .calendar-row {
+      display: grid;
+      grid-template-columns: var(--time-col) repeat(5, minmax(205px, 1fr));
+    }
+
+    .calendar-head {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .corner {
+      border-right: 1px solid var(--grid-line);
+      min-height: 96px;
+      padding: 18px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .day-head {
+      min-height: 96px;
+      padding: 18px 18px 16px;
+      border-right: 1px solid var(--grid-line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: background var(--transition-fast);
+    }
+
+    .day-head:last-child { border-right: 0; }
+
+    .day-head .weekday {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .day-head .date {
+      font-size: 31px;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      margin: 6px 0 0;
+    }
+
+    .day-head .month {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .day-head .count {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(220, 161, 176, 0.08);
+      color: var(--accent-strong);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .day-head.today::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 0;
+      height: 4px;
+      border-radius: 999px 999px 0 0;
+      background: var(--accent);
+    }
+
+    .calendar-body {
+      padding: 10px 0 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(250, 246, 244, 0.75) 100%);
+    }
+
+    .calendar-row {
+      height: var(--slot-h);
+      align-items: stretch;
+    }
+
+    .time-cell,
+    .slot-cell {
+      border-right: 1px solid var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .time-cell {
+      height: 100%;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .slot-cell {
+      height: 100%;
+      padding: 12px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      transition: background var(--transition-fast);
+    }
+
+    .slot-cell:last-child { border-right: 0; }
+
+    .day-head.is-col-hover,
+    .slot-cell.is-col-hover {
+      background: rgba(220, 161, 176, 0.09);
+    }
+
+    .slot-card {
+      width: 100%;
+      height: calc(var(--slot-h) - 24px);
+      min-height: 0;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      padding: 8px 10px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .slot-card.neutral {
+      background: rgba(255, 255, 255, 0.62);
+      border-color: rgba(24, 19, 20, 0.05);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .slot-card.available {
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid rgba(188, 114, 134, 0.82);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    }
+
+    .slot-card.available:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(188, 114, 134, 0.12);
+    }
+
+    .slot-card.booked {
+      background: var(--accent-filled);
+      color: #351e24;
+      box-shadow: 0 8px 18px rgba(188, 114, 134, 0.12);
+    }
+
+    .slot-card.blocked {
+      background: var(--blocked-bg);
+      border-color: var(--blocked-border);
+      color: var(--text-muted);
+    }
+
+    .slot-card:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 4px rgba(188, 114, 134, 0.18);
+    }
+
+    .slot-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: inherit;
+      opacity: 0.7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: inherit;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-subtitle {
+      font-size: 14px;
+      color: inherit;
+      line-height: 1.1;
+      opacity: 0.84;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-meta {
+      font-size: 11px;
+      color: inherit;
+      opacity: 0.72;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-card.neutral .slot-title,
+    .slot-card.neutral .slot-eyebrow,
+    .slot-card.neutral .slot-subtitle,
+    .slot-card.neutral .slot-meta {
+      display: none;
+    }
+
+    .calendar-note {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 18px 22px 24px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.74);
+      border-top: 1px solid var(--grid-line);
+    }
+
+    @media (max-width: 1280px) {
+      .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 840px) {
+      .app-shell {
+        padding: 16px;
+      }
+
+      .topbar,
+      .filters {
+        padding-inline: 18px;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .today-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-logo" src="./pandora-logo.svg" alt="Pandora" />
+          <div class="brand-copy">
+            <strong>Store Scheduling</strong>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="theme-switch" aria-label="Switch tema mockup">
+            <span class="is-active">Premium</span>
+            <a href="./pandora_calendar_mockup.html">Dark</a>
+          </div>
+          <span class="tag">Boutique Duomo</span>
+          <span class="action-chip">Gaia Z.</span>
+          <span class="action-chip">Preview frontend</span>
+        </div>
+      </header>
+
+      <section class="filters" aria-label="Filtri calendario">
+        <div class="field">
+          <label for="store">Boutique</label>
+          <select id="store">
+            <option>Boutique Duomo</option>
+            <option>Boutique Brera</option>
+            <option>Boutique CityLife</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="stylist">Stylist</label>
+          <select id="stylist">
+            <option>Tutti gli stylist</option>
+            <option>Martina R.</option>
+            <option>Giulia M.</option>
+            <option>Chiara D.</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="week">Settimana</label>
+          <select id="week">
+            <option>2 - 6 Marzo 2026</option>
+            <option>9 - 13 Marzo 2026</option>
+            <option>16 - 20 Marzo 2026</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="view">Vista</label>
+          <select id="view">
+            <option>Settimanale</option>
+            <option>4 giorni</option>
+            <option>Giornaliera</option>
+          </select>
+        </div>
+        <button class="today-btn" type="button">Oggi</button>
+      </section>
+
+      <section class="calendar-card" aria-label="Calendario disponibilita settimanale">
+        <div class="calendar-toolbar">
+          <div class="calendar-title">
+            <strong>Calendario disponibilita</strong>
+            <span>Solo alcuni slot sono selezionabili: quelli disponibili espongono lo stylist, quelli confermati stylist e cliente.</span>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot available"></span> Slot disponibile</span>
+            <span class="legend-item"><span class="legend-dot booked"></span> Appuntamento cliente</span>
+            <span class="legend-item"><span class="legend-dot blocked"></span> Non selezionabile</span>
+          </div>
+        </div>
+
+        <div class="calendar-grid">
+          <div class="calendar-head" id="calendarHead">
+            <div class="corner">Orario</div>
+          </div>
+          <div class="calendar-body" id="calendarBody"></div>
+        </div>
+
+        <div class="calendar-note">
+          <span>Mockup statico frontend: dati di disponibilita e appuntamenti simulati per mostrare la resa visuale.</span>
+          <span>La differenza chiave e tra slot impostato con stylist disponibile e slot gia prenotato con cliente.</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const days = [
+      { weekday: "Lun", date: "02", month: "Marzo", today: false },
+      { weekday: "Mar", date: "03", month: "Marzo", today: false },
+      { weekday: "Mer", date: "04", month: "Marzo", today: true },
+      { weekday: "Gio", date: "05", month: "Marzo", today: false },
+      { weekday: "Ven", date: "06", month: "Marzo", today: false }
+    ];
+
+    const times = [
+      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+    ];
+
+    const slotData = {
+      "0-0": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "0-1": { state: "booked", stylist: "Martina R.", client: "Sara Conti", note: "Consulenza charm" },
+      "0-4": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
+      "0-7": { state: "blocked", reason: "Break operativo" },
+      "0-10": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
+      "0-14": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
+
+      "1-2": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
+      "1-3": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
+      "1-8": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "1-11": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Styling bracelet bar" },
+      "1-15": { state: "blocked", reason: "Visual merchandising" },
+
+      "2-1": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-5": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-6": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Appuntamento incisione" },
+      "2-9": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
+      "2-13": { state: "blocked", reason: "Riassortimento" },
+
+      "3-4": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
+      "3-7": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Appointment anniversario" },
+      "3-11": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
+      "3-14": { state: "blocked", reason: "Team meeting" },
+
+      "4-0": { state: "booked", stylist: "Elena F.", client: "Paola Gatti", note: "Consulenza regalo" },
+      "4-5": { state: "blocked", reason: "Non esposto" },
+      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
+      "4-12": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Appuntamento wedding" },
+      "4-16": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
+    };
+
+    const calendarHead = document.getElementById("calendarHead");
+    const calendarBody = document.getElementById("calendarBody");
+
+    const daySummary = days.map((_, dayIndex) => {
+      let available = 0;
+      let booked = 0;
+
+      times.forEach((_, rowIndex) => {
+        const item = slotData[`${dayIndex}-${rowIndex}`];
+        if (!item) return;
+        if (item.state === "available") available += 1;
+        if (item.state === "booked") booked += 1;
+      });
+
+      return `${available} open • ${booked} booked`;
+    });
+
+    days.forEach((day, index) => {
+      const head = document.createElement("div");
+      head.className = `day-head${day.today ? " today" : ""}`;
+      head.dataset.col = index;
+      head.innerHTML = `
+        <span class="weekday">${day.weekday}</span>
+        <span class="date">${day.date}</span>
+        <span class="month">${day.month}</span>
+        <span class="count">${daySummary[index]}</span>
+      `;
+      calendarHead.appendChild(head);
+    });
+
+    const buildSlotCard = (item, time, weekday) => {
+      const slot = document.createElement("button");
+      slot.type = "button";
+      slot.className = `slot-card ${item.state}`;
+
+      if (item.state === "neutral") {
+        slot.disabled = true;
+        slot.setAttribute("aria-hidden", "true");
+        return slot;
+      }
+
+      if (item.state === "blocked") {
+        slot.disabled = true;
+      }
+
+      let eyebrow = "";
+      let title = "";
+      let subtitle = "";
+      let meta = "";
+
+      if (item.state === "available") {
+        eyebrow = "Disponibile";
+        title = item.stylist;
+        subtitle = item.note || "Stylist disponibile";
+        meta = `${weekday} • ${time}`;
+      } else if (item.state === "booked") {
+        eyebrow = "Appuntamento";
+        title = item.stylist;
+        subtitle = item.client;
+        meta = item.note || `${weekday} • ${time}`;
+      } else if (item.state === "blocked") {
+        eyebrow = "Non selezionabile";
+        title = item.reason || "Slot bloccato";
+        subtitle = "Non esposto alla prenotazione";
+        meta = `${weekday} • ${time}`;
+      }
+
+      slot.setAttribute("aria-label", `${weekday} ${time} - ${title}${subtitle ? ` - ${subtitle}` : ""}`);
+      slot.innerHTML = `
+        <span class="slot-eyebrow">${eyebrow}</span>
+        <span class="slot-title">${title}</span>
+        <span class="slot-subtitle">${subtitle}</span>
+        <span class="slot-meta">${meta}</span>
+      `;
+
+      return slot;
+    };
+
+    times.forEach((time, rowIndex) => {
+      const row = document.createElement("div");
+      row.className = "calendar-row";
+
+      const timeCell = document.createElement("div");
+      timeCell.className = "time-cell";
+      timeCell.textContent = time;
+      row.appendChild(timeCell);
+
+      days.forEach((day, dayIndex) => {
+        const cell = document.createElement("div");
+        cell.className = "slot-cell";
+        cell.dataset.col = dayIndex;
+
+        const item = slotData[`${dayIndex}-${rowIndex}`] || { state: "neutral" };
+        const slot = buildSlotCard(item, time, day.weekday);
+        cell.appendChild(slot);
+        row.appendChild(cell);
+      });
+
+      calendarBody.appendChild(row);
+    });
+
+    const clearHoverStates = () => {
+      document.querySelectorAll(".is-col-hover").forEach((element) => {
+        element.classList.remove("is-col-hover");
+      });
+    };
+
+    const applyHoverState = (col) => {
+      document.querySelectorAll(`[data-col="${col}"]`).forEach((element) => {
+        element.classList.add("is-col-hover");
+      });
+    };
+
+    const handleHoverTarget = (event) => {
+      const target = event.target.closest("[data-col]");
+      if (!target) return;
+      clearHoverStates();
+      applyHoverState(target.dataset.col);
+    };
+
+    calendarBody.addEventListener("pointerover", handleHoverTarget);
+    calendarHead.addEventListener("pointerover", handleHoverTarget);
+
+    calendarBody.addEventListener("focusin", handleHoverTarget);
+    calendarHead.addEventListener("focusin", handleHoverTarget);
+
+    calendarBody.addEventListener("pointerleave", clearHoverStates);
+    calendarHead.addEventListener("pointerleave", clearHoverStates);
+
+    calendarBody.addEventListener("focusout", () => {
+      requestAnimationFrame(() => {
+        if (!document.activeElement || !document.activeElement.closest("[data-col]")) {
+          clearHoverStates();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
