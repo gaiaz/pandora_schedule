@@ -19,8 +19,6 @@
       --accent-strong: #bc7286;
       --accent-soft: rgba(220, 161, 176, 0.12);
       --accent-filled: linear-gradient(135deg, #e6b1bf 0%, #d594a5 100%);
-      --blocked-bg: #f1ecea;
-      --blocked-border: #e2d8d5;
       --grid-line: rgba(24, 19, 20, 0.06);
       --shadow: 0 24px 60px rgba(38, 24, 29, 0.08);
       --shadow-soft: 0 12px 30px rgba(38, 24, 29, 0.06);
@@ -30,6 +28,7 @@
       --radius-lg: 18px;
       --radius-md: 14px;
       --transition-fast: 160ms ease;
+      --transition-smooth: 260ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     * { box-sizing: border-box; }
@@ -258,17 +257,15 @@
       background: #d89ba9;
     }
 
-    .legend-dot.blocked {
-      background: #ece4e2;
-      border: 1px solid #ddd0cc;
-    }
-
     .calendar-grid {
       max-height: calc(100vh - 320px);
       min-height: 420px;
       overflow: auto;
       position: relative;
       scrollbar-gutter: stable;
+      scroll-snap-type: y proximity;
+      scroll-padding-top: 97px;
+      overscroll-behavior-y: contain;
     }
 
     .calendar-head,
@@ -307,10 +304,20 @@
       flex-direction: column;
       justify-content: space-between;
       position: relative;
-      transition: background var(--transition-fast);
+      overflow: hidden;
+      transition: background var(--transition-smooth);
     }
 
     .day-head:last-child { border-right: 0; }
+
+    .day-head .day-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      transform: translateY(0);
+      transition: gap var(--transition-smooth), transform var(--transition-smooth);
+    }
 
     .day-head .weekday {
       font-size: 11px;
@@ -318,6 +325,8 @@
       color: var(--text-muted);
       letter-spacing: 0.08em;
       text-transform: uppercase;
+      opacity: 1;
+      transition: font-size var(--transition-smooth), opacity var(--transition-smooth);
     }
 
     .day-head .date {
@@ -325,11 +334,14 @@
       font-weight: 700;
       letter-spacing: -0.05em;
       margin: 6px 0 0;
+      transition: font-size var(--transition-smooth), margin var(--transition-smooth), transform var(--transition-smooth);
     }
 
     .day-head .month {
       color: var(--text-secondary);
       font-size: 13px;
+      opacity: 1;
+      transition: font-size var(--transition-smooth), opacity var(--transition-smooth);
     }
 
     .day-head .count {
@@ -343,6 +355,13 @@
       color: var(--accent-strong);
       font-size: 11px;
       font-weight: 700;
+      opacity: 1;
+      max-height: 32px;
+      overflow: hidden;
+      transform: translateY(0) scale(1);
+      transform-origin: top left;
+      will-change: opacity, transform;
+      transition: opacity var(--transition-smooth), max-height var(--transition-smooth), margin-top var(--transition-smooth), padding var(--transition-smooth), transform var(--transition-smooth);
     }
 
     .day-head.today::after {
@@ -365,6 +384,7 @@
     .calendar-row {
       height: var(--slot-h);
       align-items: stretch;
+      scroll-snap-align: start;
     }
 
     .time-cell,
@@ -440,12 +460,6 @@
       background: var(--accent-filled);
       color: #351e24;
       box-shadow: 0 8px 18px rgba(188, 114, 134, 0.12);
-    }
-
-    .slot-card.blocked {
-      background: var(--blocked-bg);
-      border-color: var(--blocked-border);
-      color: var(--text-muted);
     }
 
     .slot-card:focus-visible {
@@ -561,7 +575,6 @@
           </div>
           <span class="tag">Boutique Duomo</span>
           <span class="action-chip">Gaia Z.</span>
-          <span class="action-chip">Preview frontend</span>
         </div>
       </header>
 
@@ -604,15 +617,14 @@
 
       <section class="calendar-card" aria-label="Calendario disponibilita settimanale">
         <div class="calendar-toolbar">
-          <div class="calendar-title">
-            <strong>Calendario disponibilita</strong>
-            <span>Solo alcuni slot sono selezionabili: quelli disponibili espongono lo stylist, quelli confermati stylist e cliente.</span>
-          </div>
-          <div class="calendar-legend">
-            <span class="legend-item"><span class="legend-dot available"></span> Slot disponibile</span>
-            <span class="legend-item"><span class="legend-dot booked"></span> Appuntamento cliente</span>
-            <span class="legend-item"><span class="legend-dot blocked"></span> Non selezionabile</span>
-          </div>
+        <div class="calendar-title">
+          <strong>Calendario disponibilita</strong>
+          <span>Gli slot orari disponibili espongono lo stylist, quelli confermati mostrano stylist e cliente.</span>
+        </div>
+        <div class="calendar-legend">
+          <span class="legend-item"><span class="legend-dot available"></span> Slot disponibile</span>
+          <span class="legend-item"><span class="legend-dot booked"></span> Appuntamento cliente</span>
+        </div>
         </div>
 
         <div class="calendar-grid">
@@ -624,7 +636,7 @@
 
         <div class="calendar-note">
           <span>Mockup statico frontend: dati di disponibilita e appuntamenti simulati per mostrare la resa visuale.</span>
-          <span>La differenza chiave e tra slot impostato con stylist disponibile e slot gia prenotato con cliente.</span>
+          <span>La differenza chiave e tra slot libero con stylist disponibile e slot gia prenotato su calendario orario.</span>
         </div>
       </section>
     </div>
@@ -640,41 +652,37 @@
     ];
 
     const times = [
-      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+      "09:00", "10:00", "11:00", "12:00", "13:00",
+      "14:00", "15:00", "16:00", "17:00", "18:00",
+      "19:00", "20:00", "21:00"
     ];
 
     const slotData = {
       "0-0": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
       "0-1": { state: "booked", stylist: "Martina R.", client: "Sara Conti", note: "Consulenza charm" },
-      "0-4": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
-      "0-7": { state: "blocked", reason: "Break operativo" },
-      "0-10": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
-      "0-14": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
+      "0-2": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
+      "0-5": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
+      "0-7": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
 
-      "1-2": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
-      "1-3": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
-      "1-8": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
-      "1-11": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Styling bracelet bar" },
-      "1-15": { state: "blocked", reason: "Visual merchandising" },
+      "1-1": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
+      "1-2": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
+      "1-4": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "1-6": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Styling bracelet bar" },
 
-      "2-1": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
-      "2-5": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
-      "2-6": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Appuntamento incisione" },
-      "2-9": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
-      "2-13": { state: "blocked", reason: "Riassortimento" },
+      "2-0": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-2": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-3": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Appuntamento incisione" },
+      "2-6": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
 
-      "3-4": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
-      "3-7": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Appointment anniversario" },
-      "3-11": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
-      "3-14": { state: "blocked", reason: "Team meeting" },
+      "3-2": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
+      "3-4": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Appointment anniversario" },
+      "3-5": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
+      "3-7": { state: "booked", stylist: "Andrea L.", client: "Valentina P.", note: "Try-on" },
 
       "4-0": { state: "booked", stylist: "Elena F.", client: "Paola Gatti", note: "Consulenza regalo" },
-      "4-5": { state: "blocked", reason: "Non esposto" },
-      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
-      "4-12": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Appuntamento wedding" },
-      "4-16": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
+      "4-4": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
+      "4-6": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Appuntamento wedding" },
+      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
     };
 
     const calendarHead = document.getElementById("calendarHead");
@@ -699,9 +707,11 @@
       head.className = `day-head${day.today ? " today" : ""}`;
       head.dataset.col = index;
       head.innerHTML = `
-        <span class="weekday">${day.weekday}</span>
-        <span class="date">${day.date}</span>
-        <span class="month">${day.month}</span>
+        <div class="day-main">
+          <span class="weekday">${day.weekday}</span>
+          <span class="date">${day.date}</span>
+          <span class="month">${day.month}</span>
+        </div>
         <span class="count">${daySummary[index]}</span>
       `;
       calendarHead.appendChild(head);
@@ -713,13 +723,7 @@
       slot.className = `slot-card ${item.state}`;
 
       if (item.state === "neutral") {
-        slot.disabled = true;
-        slot.setAttribute("aria-hidden", "true");
-        return slot;
-      }
-
-      if (item.state === "blocked") {
-        slot.disabled = true;
+        return null;
       }
 
       let eyebrow = "";
@@ -737,11 +741,6 @@
         title = item.stylist;
         subtitle = item.client;
         meta = item.note || `${weekday} • ${time}`;
-      } else if (item.state === "blocked") {
-        eyebrow = "Non selezionabile";
-        title = item.reason || "Slot bloccato";
-        subtitle = "Non esposto alla prenotazione";
-        meta = `${weekday} • ${time}`;
       }
 
       slot.setAttribute("aria-label", `${weekday} ${time} - ${title}${subtitle ? ` - ${subtitle}` : ""}`);
@@ -771,7 +770,9 @@
 
         const item = slotData[`${dayIndex}-${rowIndex}`] || { state: "neutral" };
         const slot = buildSlotCard(item, time, day.weekday);
-        cell.appendChild(slot);
+        if (slot) {
+          cell.appendChild(slot);
+        }
         row.appendChild(cell);
       });
 

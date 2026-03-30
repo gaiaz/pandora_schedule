@@ -21,8 +21,6 @@
       --accent-soft: rgba(227, 167, 182, 0.12);
       --accent-glow: rgba(227, 167, 182, 0.22);
       --booked-fill: linear-gradient(135deg, #e5adbb 0%, #c98296 100%);
-      --blocked-bg: #1f2024;
-      --blocked-border: #2d2f35;
       --neutral-bg: rgba(255, 255, 255, 0.02);
       --time-col: 112px;
       --slot-h: 126px;
@@ -31,6 +29,7 @@
       --radius-md: 16px;
       --shadow: 0 34px 80px rgba(0, 0, 0, 0.45);
       --transition-fast: 180ms ease;
+      --transition-smooth: 260ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     * { box-sizing: border-box; }
@@ -254,17 +253,15 @@
       background: #d698a8;
     }
 
-    .legend-swatch.blocked {
-      background: #25272c;
-      border: 1px solid #353840;
-    }
-
     .calendar-grid {
       max-height: calc(100vh - 320px);
       min-height: 420px;
       overflow: auto;
       position: relative;
       scrollbar-gutter: stable;
+      scroll-snap-type: y proximity;
+      scroll-padding-top: 99px;
+      overscroll-behavior-y: contain;
     }
 
     .calendar-head,
@@ -304,10 +301,20 @@
       justify-content: space-between;
       position: relative;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.01) 100%);
-      transition: background var(--transition-fast);
+      overflow: hidden;
+      transition: background var(--transition-smooth);
     }
 
     .day-head:last-child { border-right: 0; }
+
+    .day-head .day-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      transform: translateY(0);
+      transition: gap var(--transition-smooth), transform var(--transition-smooth);
+    }
 
     .day-head .weekday {
       font-size: 11px;
@@ -315,6 +322,8 @@
       text-transform: uppercase;
       color: var(--text-muted);
       font-weight: 700;
+      opacity: 1;
+      transition: font-size var(--transition-smooth), opacity var(--transition-smooth);
     }
 
     .day-head .date {
@@ -322,11 +331,14 @@
       font-weight: 700;
       letter-spacing: -0.05em;
       margin-top: 6px;
+      transition: font-size var(--transition-smooth), margin-top var(--transition-smooth), transform var(--transition-smooth);
     }
 
     .day-head .month {
       color: var(--text-secondary);
       font-size: 13px;
+      opacity: 1;
+      transition: font-size var(--transition-smooth), opacity var(--transition-smooth);
     }
 
     .day-head .count {
@@ -338,6 +350,13 @@
       color: var(--accent-strong);
       font-size: 11px;
       font-weight: 700;
+      opacity: 1;
+      max-height: 32px;
+      overflow: hidden;
+      transform: translateY(0) scale(1);
+      transform-origin: top left;
+      will-change: opacity, transform;
+      transition: opacity var(--transition-smooth), max-height var(--transition-smooth), margin-top var(--transition-smooth), padding var(--transition-smooth), transform var(--transition-smooth);
     }
 
     .day-head.today::after {
@@ -361,6 +380,7 @@
     .calendar-row {
       height: var(--slot-h);
       align-items: stretch;
+      scroll-snap-align: start;
     }
 
     .time-cell,
@@ -434,12 +454,6 @@
       background: var(--booked-fill);
       color: #27181d;
       box-shadow: 0 10px 20px rgba(227, 167, 182, 0.1);
-    }
-
-    .slot-card.blocked {
-      background: var(--blocked-bg);
-      border-color: var(--blocked-border);
-      color: var(--text-muted);
     }
 
     .slot-card:focus-visible {
@@ -546,7 +560,6 @@
         </div>
         <span class="meta-chip">Boutique Duomo</span>
         <span class="meta-chip">Settimana 2 - 6 Marzo</span>
-        <span class="meta-chip">Preview frontend</span>
       </div>
     </header>
 
@@ -591,12 +604,11 @@
       <div class="calendar-bar">
         <div>
           <strong>Calendario disponibilita</strong>
-          <span>Gli slot disponibili mostrano lo stylist; quelli gia presi mostrano anche il cliente.</span>
+          <span>Gli slot orari disponibili mostrano lo stylist; quelli gia prenotati mostrano anche il cliente.</span>
         </div>
         <div class="legend">
           <span class="legend-item"><span class="legend-swatch available"></span> Disponibile con stylist</span>
           <span class="legend-item"><span class="legend-swatch booked"></span> Appuntamento cliente</span>
-          <span class="legend-item"><span class="legend-swatch blocked"></span> Non selezionabile</span>
         </div>
       </div>
 
@@ -609,7 +621,7 @@
 
       <div class="footer-note">
         <span>Mockup statico: nessun backend reale, ma stati simulati come se fossero alimentati dal pannello di disponibilita.</span>
-        <span>La resa grafica separa chiaramente disponibilita, prenotazioni gia create e slot non attivi.</span>
+        <span>La resa grafica separa chiaramente disponibilita libere e prenotazioni gia create su slot da un'ora.</span>
       </div>
     </section>
   </div>
@@ -624,42 +636,37 @@
     ];
 
     const times = [
-      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+      "09:00", "10:00", "11:00", "12:00", "13:00",
+      "14:00", "15:00", "16:00", "17:00", "18:00",
+      "19:00", "20:00", "21:00"
     ];
 
     const slotData = {
       "0-0": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
       "0-1": { state: "booked", stylist: "Martina R.", client: "Sara Conti", note: "Consulenza charm" },
-      "0-3": { state: "blocked", reason: "Brief team" },
-      "0-5": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
-      "0-10": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
-      "0-14": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
+      "0-2": { state: "available", stylist: "Elisa B.", note: "Stylist disponibile" },
+      "0-5": { state: "booked", stylist: "Elisa B.", client: "Laura Neri", note: "Gifting appointment" },
+      "0-7": { state: "available", stylist: "Diletta P.", note: "Stylist disponibile" },
 
-      "1-2": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
-      "1-4": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
-      "1-8": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
-      "1-11": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Bracelet bar" },
-      "1-15": { state: "blocked", reason: "Visual merchandising" },
+      "1-1": { state: "booked", stylist: "Luca S.", client: "Alessia Riva", note: "Pulizia gioielli" },
+      "1-2": { state: "available", stylist: "Luca S.", note: "Stylist disponibile" },
+      "1-4": { state: "available", stylist: "Martina R.", note: "Stylist disponibile" },
+      "1-6": { state: "booked", stylist: "Martina R.", client: "Marta Costa", note: "Bracelet bar" },
 
-      "2-1": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
-      "2-6": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Incisione" },
-      "2-7": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
-      "2-9": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
-      "2-12": { state: "blocked", reason: "Riassortimento" },
+      "2-0": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-3": { state: "booked", stylist: "Giulia M.", client: "Anna Villa", note: "Incisione" },
+      "2-4": { state: "available", stylist: "Giulia M.", note: "Stylist disponibile" },
+      "2-6": { state: "booked", stylist: "Giulia M.", client: "Roberta Sala", note: "Gift consultation" },
 
-      "3-4": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
-      "3-7": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Anniversario" },
-      "3-11": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
-      "3-14": { state: "blocked", reason: "Team meeting" },
-      "3-15": { state: "booked", stylist: "Andrea L.", client: "Valentina P.", note: "Try-on" },
+      "3-2": { state: "available", stylist: "Chiara D.", note: "Stylist disponibile" },
+      "3-4": { state: "booked", stylist: "Chiara D.", client: "Silvia Greco", note: "Anniversario" },
+      "3-5": { state: "available", stylist: "Andrea L.", note: "Stylist disponibile" },
+      "3-7": { state: "booked", stylist: "Andrea L.", client: "Valentina P.", note: "Try-on" },
 
       "4-0": { state: "booked", stylist: "Elena F.", client: "Paola Gatti", note: "Consulenza regalo" },
-      "4-5": { state: "blocked", reason: "Non esposto" },
-      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
-      "4-12": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Wedding appointment" },
-      "4-16": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
+      "4-4": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
+      "4-6": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Wedding appointment" },
+      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
     };
 
     const calendarHead = document.getElementById("calendarHead");
@@ -684,9 +691,11 @@
       head.className = `day-head${day.today ? " today" : ""}`;
       head.dataset.col = index;
       head.innerHTML = `
-        <span class="weekday">${day.weekday}</span>
-        <span class="date">${day.date}</span>
-        <span class="month">${day.month}</span>
+        <div class="day-main">
+          <span class="weekday">${day.weekday}</span>
+          <span class="date">${day.date}</span>
+          <span class="month">${day.month}</span>
+        </div>
         <span class="count">${summary[index]}</span>
       `;
       calendarHead.appendChild(head);
@@ -698,13 +707,7 @@
       card.className = `slot-card ${item.state}`;
 
       if (item.state === "neutral") {
-        card.disabled = true;
-        card.setAttribute("aria-hidden", "true");
-        return card;
-      }
-
-      if (item.state === "blocked") {
-        card.disabled = true;
+        return null;
       }
 
       let eyebrow = "";
@@ -722,11 +725,6 @@
         title = item.stylist;
         subtitle = item.client;
         meta = item.note || `${weekday} • ${time}`;
-      } else if (item.state === "blocked") {
-        eyebrow = "Non selezionabile";
-        title = item.reason || "Slot bloccato";
-        subtitle = "Non prenotabile";
-        meta = `${weekday} • ${time}`;
       }
 
       card.setAttribute("aria-label", `${weekday} ${time} - ${title}${subtitle ? ` - ${subtitle}` : ""}`);
@@ -753,7 +751,10 @@
         cell.className = "slot-cell";
         cell.dataset.col = dayIndex;
         const entry = slotData[`${dayIndex}-${rowIndex}`] || { state: "neutral" };
-        cell.appendChild(buildCard(entry, time, day.weekday));
+        const card = buildCard(entry, time, day.weekday);
+        if (card) {
+          cell.appendChild(card);
+        }
         row.appendChild(cell);
       });
 
