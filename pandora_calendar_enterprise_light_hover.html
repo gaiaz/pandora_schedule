@@ -154,7 +154,7 @@
 
     .filters {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
       gap: 14px;
       padding: 18px;
       margin-bottom: 18px;
@@ -226,6 +226,14 @@
       font-size: 13px;
     }
 
+    .calendar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .calendar-legend {
       display: flex;
       gap: 14px;
@@ -239,6 +247,25 @@
       gap: 8px;
       color: var(--text-secondary);
       font-size: 12px;
+    }
+
+    .calendar-secondary-btn {
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .calendar-secondary-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+      box-shadow: 0 8px 18px rgba(188, 114, 134, 0.10);
     }
 
     .legend-dot {
@@ -271,7 +298,7 @@
     .calendar-head,
     .calendar-row {
       display: grid;
-      grid-template-columns: var(--time-col) repeat(5, minmax(205px, 1fr));
+      grid-template-columns: var(--time-col) repeat(7, minmax(175px, 1fr));
     }
 
     .calendar-head {
@@ -419,6 +446,23 @@
     .day-head.is-col-hover,
     .slot-cell.is-col-hover {
       background: rgba(220, 161, 176, 0.09);
+    }
+
+    .day-head.is-today-focus,
+    .slot-cell.is-today-focus {
+      animation: todayPulseLight 900ms ease;
+    }
+
+    @keyframes todayPulseLight {
+      0% {
+        background: rgba(220, 161, 176, 0.03);
+      }
+      45% {
+        background: rgba(220, 161, 176, 0.16);
+      }
+      100% {
+        background: rgba(220, 161, 176, 0.03);
+      }
     }
 
     .slot-card {
@@ -597,22 +641,14 @@
           </select>
         </div>
         <div class="field">
-          <label for="week">Settimana</label>
-          <select id="week">
-            <option>2 - 6 Marzo 2026</option>
-            <option>9 - 13 Marzo 2026</option>
-            <option>16 - 20 Marzo 2026</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="view">Vista</label>
-          <select id="view">
-            <option>Settimanale</option>
-            <option>4 giorni</option>
-            <option>Giornaliera</option>
-          </select>
-        </div>
-        <button class="today-btn" type="button">Oggi</button>
+        <label for="week">Settimana</label>
+        <select id="week">
+          <option>2 - 8 Marzo 2026</option>
+          <option>9 - 15 Marzo 2026</option>
+          <option>16 - 22 Marzo 2026</option>
+        </select>
+      </div>
+        <button class="today-btn" type="button">Cerca</button>
       </section>
 
       <section class="calendar-card" aria-label="Calendario disponibilita settimanale">
@@ -621,9 +657,12 @@
           <strong>Calendario disponibilita</strong>
           <span>Gli slot orari disponibili espongono lo stylist, quelli confermati mostrano stylist e cliente.</span>
         </div>
-        <div class="calendar-legend">
-          <span class="legend-item"><span class="legend-dot available"></span> Slot disponibile</span>
-          <span class="legend-item"><span class="legend-dot booked"></span> Appuntamento cliente</span>
+        <div class="calendar-actions">
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot available"></span> Slot disponibile</span>
+            <span class="legend-item"><span class="legend-dot booked"></span> Appuntamento cliente</span>
+          </div>
+          <button class="calendar-secondary-btn" type="button" id="todayButton">Oggi</button>
         </div>
         </div>
 
@@ -648,7 +687,9 @@
       { weekday: "Mar", date: "03", month: "Marzo", today: false },
       { weekday: "Mer", date: "04", month: "Marzo", today: true },
       { weekday: "Gio", date: "05", month: "Marzo", today: false },
-      { weekday: "Ven", date: "06", month: "Marzo", today: false }
+      { weekday: "Ven", date: "06", month: "Marzo", today: false },
+      { weekday: "Sab", date: "07", month: "Marzo", today: false },
+      { weekday: "Dom", date: "08", month: "Marzo", today: false }
     ];
 
     const times = [
@@ -682,11 +723,21 @@
       "4-0": { state: "booked", stylist: "Elena F.", client: "Paola Gatti", note: "Consulenza regalo" },
       "4-4": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
       "4-6": { state: "booked", stylist: "Elena F.", client: "Giada Leone", note: "Appuntamento wedding" },
-      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" }
+      "4-8": { state: "available", stylist: "Elena F.", note: "Stylist disponibile" },
+
+      "5-1": { state: "available", stylist: "Martina R.", note: "Stylist weekend" },
+      "5-3": { state: "booked", stylist: "Martina R.", client: "Chiara Valli", note: "Gift styling" },
+      "5-6": { state: "available", stylist: "Luca S.", note: "Stylist weekend" },
+
+      "6-2": { state: "available", stylist: "Giulia M.", note: "Stylist weekend" },
+      "6-4": { state: "booked", stylist: "Giulia M.", client: "Elisa Rizzi", note: "Sunday appointment" },
+      "6-7": { state: "available", stylist: "Elena F.", note: "Stylist weekend" }
     };
 
+    const calendarGrid = document.querySelector(".calendar-grid");
     const calendarHead = document.getElementById("calendarHead");
     const calendarBody = document.getElementById("calendarBody");
+    const todayButton = document.getElementById("todayButton");
 
     const daySummary = days.map((_, dayIndex) => {
       let available = 0;
@@ -806,6 +857,41 @@
 
     calendarBody.addEventListener("pointerleave", clearHoverStates);
     calendarHead.addEventListener("pointerleave", clearHoverStates);
+
+    const focusTodayColumn = () => {
+      const todayIndex = days.findIndex((day) => day.today);
+      if (todayIndex < 0) return;
+
+      const todayHead = calendarHead.querySelector(`.day-head[data-col="${todayIndex}"]`);
+      if (!todayHead) return;
+
+      const targetLeft = Math.max(
+        0,
+        todayHead.offsetLeft - (calendarGrid.clientWidth - todayHead.clientWidth) / 2
+      );
+
+      calendarGrid.scrollTo({
+        top: 0,
+        left: targetLeft,
+        behavior: "smooth"
+      });
+
+      document.querySelectorAll(".is-today-focus").forEach((element) => {
+        element.classList.remove("is-today-focus");
+      });
+
+      document.querySelectorAll(`[data-col="${todayIndex}"]`).forEach((element) => {
+        element.classList.add("is-today-focus");
+      });
+
+      window.setTimeout(() => {
+        document.querySelectorAll(".is-today-focus").forEach((element) => {
+          element.classList.remove("is-today-focus");
+        });
+      }, 950);
+    };
+
+    todayButton.addEventListener("click", focusTodayColumn);
 
     calendarBody.addEventListener("focusout", () => {
       requestAnimationFrame(() => {
